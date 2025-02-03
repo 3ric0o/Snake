@@ -73,6 +73,14 @@ build CMakeFiles/Snake.dir/snake_list.c.obj: C_COMPILER__Snake_unscanned_Debug C
   OBJECT_DIR = CMakeFiles\Snake.dir
   OBJECT_FILE_DIR = CMakeFiles\Snake.dir
 
+build CMakeFiles/Snake.dir/screen_shake.c.obj: C_COMPILER__Snake_unscanned_Debug C$:/Projects/Raylib_C/Snake/screen_shake.c || cmake_object_order_depends_target_Snake
+  DEFINES = -DGRAPHICS_API_OPENGL_33 -DPLATFORM_DESKTOP
+  DEP_FILE = CMakeFiles\Snake.dir\screen_shake.c.obj.d
+  FLAGS = -g -std=gnu11 -fdiagnostics-color=always
+  INCLUDES = -IC:/Projects/Raylib_C/Snake/cmake-build-debug/_deps/raylib-src/src -IC:/Projects/Raylib_C/Snake/cmake-build-debug/_deps/raylib-src/src/external/glfw/include
+  OBJECT_DIR = CMakeFiles\Snake.dir
+  OBJECT_FILE_DIR = CMakeFiles\Snake.dir
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target Snake
@@ -81,7 +89,7 @@ build CMakeFiles/Snake.dir/snake_list.c.obj: C_COMPILER__Snake_unscanned_Debug C
 #############################################
 # Link the executable Snake.exe
 
-build Snake.exe: C_EXECUTABLE_LINKER__Snake_Debug CMakeFiles/Snake.dir/main.c.obj CMakeFiles/Snake.dir/snake_array.c.obj CMakeFiles/Snake.dir/snake_list.c.obj | _deps/raylib-build/raylib/libraylib.a || _deps/raylib-build/raylib/external/glfw/src/glfw _deps/raylib-build/raylib/libraylib.a
+build Snake.exe: C_EXECUTABLE_LINKER__Snake_Debug CMakeFiles/Snake.dir/main.c.obj CMakeFiles/Snake.dir/snake_array.c.obj CMakeFiles/Snake.dir/snake_list.c.obj CMakeFiles/Snake.dir/screen_shake.c.obj | _deps/raylib-build/raylib/libraylib.a || _deps/raylib-build/raylib/external/glfw/src/glfw _deps/raylib-build/raylib/libraylib.a
   FLAGS = -g
   LINK_LIBRARIES = _deps/raylib-build/raylib/libraylib.a  -lopengl32  -lglu32  -lwinmm  -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   OBJECT_DIR = CMakeFiles\Snake.dir

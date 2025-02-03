@@ -17,7 +17,7 @@ extern void list_cleanup(void);
 // Implementations of the SnakeInterface functions
 static void array_init(int initial_x, int initial_y)
 {
-    snake_array.length = 10;
+    snake_array.length = 1;
     snake_array.positions[0].x = initial_x;
     snake_array.positions[0].y = initial_y;
 }
@@ -81,6 +81,11 @@ SnakeArray* get_array_data(void)
     return &snake_array;
 }
 
+static Position* array_get_positions(void)
+{
+    return snake_array.positions;
+}
+
 // Initialize the snake interface
 SnakeInterface *get_snake_array(bool first_init)
 {
@@ -94,6 +99,7 @@ SnakeInterface *get_snake_array(bool first_init)
         snake_interface.get_length = array_get_length;
         snake_interface.draw = array_draw;
         snake_interface.cleanup = array_cleanup;
+        snake_interface.get_positions = array_get_positions;
     }
     else
     {

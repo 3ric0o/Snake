@@ -36,6 +36,9 @@ typedef struct
     // Clean up rss
     void (*cleanup)(void);
 
+    // Get the snake's positions
+    Position* (*get_positions)(void);
+
 } SnakeInterface;
 
 #endif //SNAKE_SNAKE_INTERFACE_H
