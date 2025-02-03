@@ -36,7 +36,8 @@ add_executable(Snake main.c
         snake_array.h
         snake_list.h
         snake_array.c
-        snake_list.c)
+        snake_list.c
+        snake_common.h)
 
 # set the include directory
 target_include_directories(Snake PRIVATE ${raylib_INCLUDE_DIRS})

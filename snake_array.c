@@ -1,17 +1,18 @@
 #include "snake_interface.h"
+#include "snake_common.h"
+#include "snake_array.h"
 #include <raylib.h>
+#include <stddef.h>
 
 #define MAX_SNAKE_LENGTH 100
 
-typedef struct
-{
-    Position positions[MAX_SNAKE_LENGTH];
-    int length;
 
-} SnakeArray;
 
 static SnakeArray snake_array;
 static SnakeInterface snake_interface;
+
+// Declare external access to list cleanup
+extern void list_cleanup(void);
 
 // Implementations of the SnakeInterface functions
 static void array_init(int initial_x, int initial_y)
@@ -70,9 +71,14 @@ static void array_draw(void)
     }
 }
 
-static void array_cleanup(void)
+void array_cleanup(void)
 {
     // Nothing to clean up for array implementation
+}
+
+SnakeArray* get_array_data(void)
+{
+    return &snake_array;
 }
 
 // Initialize the snake interface
@@ -88,11 +94,35 @@ SnakeInterface *get_snake_array(bool first_init)
         snake_interface.get_length = array_get_length;
         snake_interface.draw = array_draw;
         snake_interface.cleanup = array_cleanup;
-
-        return &snake_interface;
     }
-}
+    else
+    {
+        // Count and copy nodes from list to array
+        int count = 0;
+        SnakeNode *current = snake_list.head;
+        while(current != NULL)
+        {
+            if(count < MAX_SNAKE_LENGTH)
+            {
+                snake_array.positions[count] = current->pos;
+                count++;
+            }
+            current = current->next;
+        }
 
-// 1. We find out how many nodes there are (linear search with acculumulator)
-// 2. We allocate an array of positions
-// 3. We copy the positions from the nodes to the array
+        snake_array.length = count;
+        list_cleanup();  // Clean up the old list
+
+        // Set up the interface functions
+        snake_interface.init = array_init;
+        snake_interface.move = array_move;
+        snake_interface.grow = array_grow;
+        snake_interface.check_collision = array_check_collision;
+        snake_interface.get_head = array_get_head;
+        snake_interface.get_length = array_get_length;
+        snake_interface.draw = array_draw;
+        snake_interface.cleanup = array_cleanup;
+    }
+
+    return &snake_interface;
+}

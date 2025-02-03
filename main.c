@@ -65,17 +65,17 @@ int main(void)
     InitWindow(1600,900,"Snake Game");
     SetTargetFPS(15);
 
-    //check_dataStructure(using_array, &snake);
+    check_dataStructure(using_array, &snake);
     snake = get_snake_array(true);
     snake->init(800,450);
 
     while (!WindowShouldClose())
     {
-        /*if (IsKeyPressed(KEY_SPACE))
+        if (IsKeyPressed(KEY_SPACE))
         {
             using_array = !using_array;
             check_dataStructure(using_array, &snake);
-        }*/
+        }
 
         BeginDrawing();
         ClearBackground(BLACK);
