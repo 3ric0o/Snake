@@ -71,7 +71,6 @@ bool CheckEdgeCollision(Position pos)
 }
 bool IsPositionOnSnake(Vector2 pos, SnakeInterface *snake)
 {
-    // Get snake positions (this will need to be added to your snake interface)
     int length = snake->get_length();
     Position *positions = snake->get_positions();
 
@@ -88,19 +87,10 @@ void SpawnApple(Apple *apple, SnakeInterface *snake)
 {
     Vector2 newPos;
     do {
-        // Calculate playable area
-        int playAreaWidth = WINDOW_WIDTH - 30;  // Subtract segment size to keep within bounds
-        int playAreaHeight = WINDOW_HEIGHT - STATUS_BAR_HEIGHT - 30;  // Subtract status bar and segment size
+        // Calculate grid-aligned positions
+        int gridX = GetRandomValue(0, (WINDOW_WIDTH / 30) - 1);
+        int gridY = GetRandomValue(0, ((WINDOW_HEIGHT - STATUS_BAR_HEIGHT) / 30) - 1);
 
-        // Calculate number of possible grid positions
-        int maxGridX = playAreaWidth / 30;
-        int maxGridY = playAreaHeight / 30;
-
-        // Get random grid coordinates
-        int gridX = GetRandomValue(0, maxGridX);
-        int gridY = GetRandomValue(0, maxGridY);
-
-        // Convert to pixel coordinates, ensuring alignment with snake movement
         newPos.x = gridX * 30;
         newPos.y = STATUS_BAR_HEIGHT + (gridY * 30);
 
@@ -143,10 +133,8 @@ void DrawApple(Apple apple)
 {
     if (apple.active)
     {
-        // Draw the apple as a red square
         DrawRectangle(apple.position.x, apple.position.y, 30, 30, RED);
 
-        // Optional: Draw a border to make grid alignment visible
         DrawRectangleLinesEx((Rectangle){
                 apple.position.x,
                 apple.position.y,
@@ -164,15 +152,10 @@ void ConstantlyMove(SnakeInterface *snake, GameState *state)
         state->moveTimer = 0;
 
         Position head = snake->get_head();
-        // Ensure next position stays on grid
         Position nextPos = {
                 head.x + state->direction.x,
                 head.y + state->direction.y
         };
-
-        // Debug print to verify positions
-        printf("Head pos: (%d, %d), Next pos: (%d, %d)\n",
-               head.x, head.y, nextPos.x, nextPos.y);
 
         if (CheckEdgeCollision(nextPos))
         {
@@ -195,13 +178,16 @@ void ConstantlyMove(SnakeInterface *snake, GameState *state)
 }
 void DrawDebugGrid(void)
 {
-    // Draw vertical lines
-    for(int x = 0; x < WINDOW_WIDTH; x += 30) {
-        DrawLine(x, STATUS_BAR_HEIGHT, x, WINDOW_HEIGHT, (Color){50, 50, 50, 255});
+    const Color gridColor = (Color){50, 50, 50, 100};
+
+    // Draw vertical grid lines
+    for (int x = 0; x <= WINDOW_WIDTH; x += 30) {
+        DrawLine(x, STATUS_BAR_HEIGHT, x, WINDOW_HEIGHT, gridColor);
     }
-    // Draw horizontal lines
-    for(int y = STATUS_BAR_HEIGHT; y < WINDOW_HEIGHT; y += 30) {
-        DrawLine(0, y, WINDOW_WIDTH, y, (Color){50, 50, 50, 255});
+
+    // Draw horizontal grid lines
+    for (int y = STATUS_BAR_HEIGHT; y <= WINDOW_HEIGHT; y += 30) {
+        DrawLine(0, y, WINDOW_WIDTH, y, gridColor);
     }
 }
 void DrawStatusBar(SnakeInterface* snake, bool using_array, int score)
@@ -244,6 +230,11 @@ void DrawGameState(SnakeInterface *snake, GameState *state)
     DrawStatusBar(snake, state->using_array, state->score);
     DrawRectangleLinesEx((Rectangle){0, STATUS_BAR_HEIGHT, WINDOW_WIDTH, WINDOW_HEIGHT - STATUS_BAR_HEIGHT}, 1, WHITE);
 
+    // Debug: Draw position markers
+    Position head = snake->get_head();
+    DrawCircle(head.x, head.y, 3, YELLOW);  // Mark snake head center
+    DrawCircle(state->apple.position.x, state->apple.position.y, 3, GREEN);
+
     DrawApple(state->apple);  // Draw apple
     snake->draw();
 
@@ -283,6 +274,9 @@ int main(void)
 
     SnakeInterface *snake = get_snake_array(true);
 
+    int startX = ((WINDOW_WIDTH / 2) / 30) * 30;
+    int startY = (((WINDOW_HEIGHT - STATUS_BAR_HEIGHT) / 2) / 30) * 30 + STATUS_BAR_HEIGHT;
+
     GameState state = {
             .gameOver = false,
             .direction = {30, 0},
@@ -293,8 +287,6 @@ int main(void)
             .apple = {0}
     };
 
-    int startX = ((WINDOW_WIDTH / 2) / 30) * 30;  // Round to nearest grid position
-    int startY = (((WINDOW_HEIGHT + STATUS_BAR_HEIGHT) / 2) / 30) * 30;
     snake->init(startX, startY);
     SpawnApple(&state.apple, snake);
     InitScreenShake();

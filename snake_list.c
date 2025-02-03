@@ -2,6 +2,7 @@
 #include "snake_array.h"
 #include <stdlib.h>
 #include <raylib.h>
+#include <stdio.h>
 
 #define MAX_SNAKE_LENGTH 100
 
@@ -20,12 +21,52 @@ typedef struct
 SnakeList snake_list;
 static SnakeInterface snake_interface;
 
+static void validate_snake_list(const char* caller)
+{
+    printf("DEBUG: Validating snake list (called from %s)\n", caller);
+
+    if (snake_list.head == NULL) {
+        printf("DEBUG: List is empty\n");
+        return;
+    }
+
+    int count = 0;
+    SnakeNode* current = snake_list.head;
+    while (current != NULL && count < MAX_SNAKE_LENGTH) {
+        printf("DEBUG: Node %d at (%d, %d)\n",
+               count, current->pos.x, current->pos.y);
+        current = current->next;
+        count++;
+    }
+
+    if (count != snake_list.length) {
+        printf("DEBUG: WARNING - Length mismatch! Counted: %d, Stored: %d\n",
+               count, snake_list.length);
+    }
+}
+static void print_snake_state(const char* message)
+{
+    printf("\nDEBUG: %s\n", message);
+    printf("Snake length: %d\n", snake_list.length);
+
+    SnakeNode* current = snake_list.head;
+    int i = 0;
+    while (current != NULL) {
+        printf("Node %d: (%d, %d)\n", i, current->pos.x, current->pos.y);
+        current = current->next;
+        i++;
+    }
+    printf("\n");
+}
+
 // Function declarations
 extern void array_cleanup(void);
 
 // Implementations of the SnakeInterface functions
 static void list_init(int x, int y)
 {
+    printf("DEBUG: Initializing snake at (%d, %d)\n", x, y);
+
     // Clear any existing nodes
     while (snake_list.head != NULL)
     {
@@ -34,60 +75,111 @@ static void list_init(int x, int y)
         free(temp);
     }
 
+    // Create initial node
+    snake_list.head = malloc(sizeof(SnakeNode));
+    if (snake_list.head == NULL) {
+        printf("DEBUG: Failed to allocate initial node\n");
+        return;
+    }
+
     // Ensure starting position is grid-aligned
     x = (x / 30) * 30;
     y = (y / 30) * 30;
 
-    // Create initial node
-    snake_list.head = malloc(sizeof(SnakeNode));
     snake_list.head->pos.x = x;
     snake_list.head->pos.y = y;
     snake_list.head->next = NULL;
     snake_list.length = 1;
+
+    printf("DEBUG: Snake initialized. Length: %d\n", snake_list.length);
 }
 
 static void list_move(int x, int y)
 {
-    // For single node, just update position
-    if (snake_list.length == 1)
-    {
-        // Ensure movement aligns with grid
-        snake_list.head->pos.x += x;
-        snake_list.head->pos.y += y;
+    printf("DEBUG: Starting move. Length: %d, Direction: (%d, %d)\n", snake_list.length, x, y);
+
+    print_snake_state("Before move");
+
+    if (snake_list.head == NULL) {
+        printf("DEBUG: Error - Head is NULL\n");
         return;
     }
 
-    SnakeNode *current = snake_list.head;
-    SnakeNode *prev = NULL;
+    // Single node case
+    if (snake_list.length == 1) {
+        snake_list.head->pos.x += x;
+        snake_list.head->pos.y += y;
+        printf("DEBUG: Single node moved to (%d, %d)\n",
+               snake_list.head->pos.x, snake_list.head->pos.y);
+        return;
+    }
 
-    // Find the last node
-    while(current->next != NULL)
-    {
-        prev = current;
+    // For multiple nodes:
+    // 1. Create new head
+    SnakeNode* new_head = malloc(sizeof(SnakeNode));
+    if (!new_head) {
+        printf("DEBUG: Failed to allocate new head\n");
+        return;
+    }
+
+    // 2. Set new head position
+    new_head->pos.x = snake_list.head->pos.x + x;
+    new_head->pos.y = snake_list.head->pos.y + y;
+
+    // 3. Insert new head
+    new_head->next = snake_list.head;
+    snake_list.head = new_head;
+
+    // 4. Remove tail (unless growing)
+    SnakeNode* current = snake_list.head;
+    while (current->next != NULL && current->next->next != NULL) {
         current = current->next;
     }
 
-    // Only reposition nodes if we have more than one
-    if (prev != NULL) {
-        // Move last node to front
-        current->pos = snake_list.head->pos;  // Copy current head position
-        current->next = snake_list.head;      // Point to old head
-        snake_list.head = current;            // Make last node new head
-        prev->next = NULL;                    // Break old last node connection
-
-        // Update new head position with grid-aligned movement
-        snake_list.head->pos.x += x;
-        snake_list.head->pos.y += y;
+    if (current->next != NULL) {
+        free(current->next);
+        current->next = NULL;
     }
+    print_snake_state("After move");
 }
 
 static void list_grow(void)
 {
-    SnakeNode *new_node = malloc(sizeof(SnakeNode));
-    new_node->pos = snake_list.head->pos;
-    new_node->next = snake_list.head;
-    snake_list.head = new_node;
+    print_snake_state("Before grow");
+    printf("DEBUG: Starting grow. Current length: %d\n", snake_list.length);
+
+    if (snake_list.length >= MAX_SNAKE_LENGTH) {
+        return;
+    }
+
+    // For single node, duplicate it
+    if (snake_list.length == 1) {
+        SnakeNode* new_node = malloc(sizeof(SnakeNode));
+        if (!new_node) {
+            return;
+        }
+        new_node->pos = snake_list.head->pos;
+        new_node->next = NULL;
+        snake_list.head->next = new_node;
+        snake_list.length = 2;
+        return;
+    }
+
+    // For multiple nodes, copy the last node
+    SnakeNode* current = snake_list.head;
+    while (current->next != NULL) {
+        current = current->next;
+    }
+
+    SnakeNode* new_node = malloc(sizeof(SnakeNode));
+    if (!new_node) {
+        return;
+    }
+    new_node->pos = current->pos;
+    new_node->next = NULL;
+    current->next = new_node;
     snake_list.length++;
+    print_snake_state("After grow");
 }
 
 static bool list_check_collision(Position pos)
@@ -106,6 +198,10 @@ static bool list_check_collision(Position pos)
 
 static Position list_get_head(void)
 {
+    if (snake_list.head == NULL) {
+        printf("DEBUG: Head is NULL in get_head\n");
+        return (Position){0, 0};
+    }
     return snake_list.head->pos;
 }
 
@@ -116,12 +212,26 @@ static int list_get_length(void)
 
 static void list_draw(void)
 {
+    validate_snake_list("draw");
+
+    if (snake_list.head == NULL) {
+        printf("DEBUG: Head is NULL in draw\n");
+        return;
+    }
+
     SnakeNode *current = snake_list.head;
-    while(current != NULL)
+    int segments = 0;
+
+    while (current != NULL && segments < snake_list.length)
     {
         DrawRectangle(current->pos.x, current->pos.y, 30, 30, BLUE);
+        printf("DEBUG: Drawing segment %d at (%d, %d)\n",
+               segments, current->pos.x, current->pos.y);
         current = current->next;
+        segments++;
     }
+
+    printf("DEBUG: Drew %d segments\n", segments);
 }
 
 void list_cleanup(void)
@@ -138,7 +248,7 @@ void list_cleanup(void)
 
 static Position* list_get_positions(void)
 {
-    static Position positions[MAX_SNAKE_LENGTH];  // Make sure MAX_LENGTH is defined
+    static Position positions[MAX_SNAKE_LENGTH];
     SnakeNode* current = snake_list.head;
     int i = 0;
 
@@ -157,6 +267,9 @@ SnakeInterface *get_snake_list(bool first_init)
 {
     if(first_init)
     {
+        snake_list.head = NULL;
+        snake_list.length = 0;
+
         snake_interface.init = list_init;
         snake_interface.move = list_move;
         snake_interface.grow = list_grow;
