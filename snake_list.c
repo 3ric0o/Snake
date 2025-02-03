@@ -24,20 +24,34 @@ static SnakeInterface snake_interface;
 extern void array_cleanup(void);
 
 // Implementations of the SnakeInterface functions
-static void list_init(int initial_x, int initial_y)
+static void list_init(int x, int y)
 {
+    // Clear any existing nodes
+    while (snake_list.head != NULL)
+    {
+        SnakeNode *temp = snake_list.head;
+        snake_list.head = snake_list.head->next;
+        free(temp);
+    }
+
+    // Ensure starting position is grid-aligned
+    x = (x / 30) * 30;
+    y = (y / 30) * 30;
+
+    // Create initial node
     snake_list.head = malloc(sizeof(SnakeNode));
-    snake_list.head->pos.x = initial_x;
-    snake_list.head->pos.y = initial_y;
+    snake_list.head->pos.x = x;
+    snake_list.head->pos.y = y;
     snake_list.head->next = NULL;
     snake_list.length = 1;
 }
 
 static void list_move(int x, int y)
 {
-    // Handle the case where there's only one node
+    // For single node, just update position
     if (snake_list.length == 1)
     {
+        // Ensure movement aligns with grid
         snake_list.head->pos.x += x;
         snake_list.head->pos.y += y;
         return;
@@ -55,10 +69,13 @@ static void list_move(int x, int y)
 
     // Only reposition nodes if we have more than one
     if (prev != NULL) {
-        current->pos = snake_list.head->pos;
-        current->next = snake_list.head;
-        snake_list.head = current;
-        prev->next = NULL;
+        // Move last node to front
+        current->pos = snake_list.head->pos;  // Copy current head position
+        current->next = snake_list.head;      // Point to old head
+        snake_list.head = current;            // Make last node new head
+        prev->next = NULL;                    // Break old last node connection
+
+        // Update new head position with grid-aligned movement
         snake_list.head->pos.x += x;
         snake_list.head->pos.y += y;
     }

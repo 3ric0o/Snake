@@ -9,6 +9,7 @@
 #define STATUS_BAR_HEIGHT 40
 #define PLAY_AREA_Y STATUS_BAR_HEIGHT
 
+
 typedef struct
 {
     Vector2 position;
@@ -43,21 +44,23 @@ void CheckDataStructure(SnakeInterface **snake, bool *using_array)
 }
 Vector2 GetInput(Vector2 direction)
 {
+    const int GRID_SIZE = 30;
+
     if (IsKeyPressed(KEY_D) && direction.x == 0)
     {
-        direction = (Vector2){30, 0};
+        direction = (Vector2){GRID_SIZE, 0};
     }
     if (IsKeyPressed(KEY_A) && direction.x == 0)
     {
-        direction = (Vector2){-30, 0};
+        direction = (Vector2){-GRID_SIZE, 0};
     }
     if (IsKeyPressed(KEY_W) && direction.y == 0)
     {
-        direction = (Vector2){0, -30};
+        direction = (Vector2){0, -GRID_SIZE};
     }
     if (IsKeyPressed(KEY_S) && direction.y == 0)
     {
-        direction = (Vector2){0, 30};
+        direction = (Vector2){0, GRID_SIZE};
     }
     return direction;
 }
@@ -85,9 +88,22 @@ void SpawnApple(Apple *apple, SnakeInterface *snake)
 {
     Vector2 newPos;
     do {
-        // Generate random position aligned to grid (30 pixel grid)
-        newPos.x = GetRandomValue(0, (WINDOW_WIDTH - 30) / 30) * 30;
-        newPos.y = GetRandomValue(STATUS_BAR_HEIGHT / 30, (WINDOW_HEIGHT - 30) / 30) * 30;
+        // Calculate playable area
+        int playAreaWidth = WINDOW_WIDTH - 30;  // Subtract segment size to keep within bounds
+        int playAreaHeight = WINDOW_HEIGHT - STATUS_BAR_HEIGHT - 30;  // Subtract status bar and segment size
+
+        // Calculate number of possible grid positions
+        int maxGridX = playAreaWidth / 30;
+        int maxGridY = playAreaHeight / 30;
+
+        // Get random grid coordinates
+        int gridX = GetRandomValue(0, maxGridX);
+        int gridY = GetRandomValue(0, maxGridY);
+
+        // Convert to pixel coordinates, ensuring alignment with snake movement
+        newPos.x = gridX * 30;
+        newPos.y = STATUS_BAR_HEIGHT + (gridY * 30);
+
     } while (IsPositionOnSnake(newPos, snake));
 
     apple->position = newPos;
@@ -127,7 +143,16 @@ void DrawApple(Apple apple)
 {
     if (apple.active)
     {
+        // Draw the apple as a red square
         DrawRectangle(apple.position.x, apple.position.y, 30, 30, RED);
+
+        // Optional: Draw a border to make grid alignment visible
+        DrawRectangleLinesEx((Rectangle){
+                apple.position.x,
+                apple.position.y,
+                30,
+                30
+        }, 1, WHITE);
     }
 }
 void ConstantlyMove(SnakeInterface *snake, GameState *state)
@@ -139,18 +164,16 @@ void ConstantlyMove(SnakeInterface *snake, GameState *state)
         state->moveTimer = 0;
 
         Position head = snake->get_head();
-        Position nextPos = {head.x + state->direction.x, head.y + state->direction.y};
+        // Ensure next position stays on grid
+        Position nextPos = {
+                head.x + state->direction.x,
+                head.y + state->direction.y
+        };
 
-        // Check apple collision with current position before moving
-        Vector2 currentHead = {head.x, head.y};
-        if (state->apple.active && CheckAppleCollision(currentHead, state->apple))
-        {
-            snake->grow();
-            state->score++;
-            SpawnApple(&state->apple, snake);
-        }
+        // Debug print to verify positions
+        printf("Head pos: (%d, %d), Next pos: (%d, %d)\n",
+               head.x, head.y, nextPos.x, nextPos.y);
 
-        // Check edge collision with next position
         if (CheckEdgeCollision(nextPos))
         {
             state->gameOver = true;
@@ -158,8 +181,27 @@ void ConstantlyMove(SnakeInterface *snake, GameState *state)
             return;
         }
 
-        // Move snake
+        // Check apple collision with current position
+        Vector2 currentHead = {(float)head.x, (float)head.y};
+        if (state->apple.active && CheckAppleCollision(currentHead, state->apple))
+        {
+            snake->grow();
+            state->score++;
+            SpawnApple(&state->apple, snake);
+        }
+
         snake->move(state->direction.x, state->direction.y);
+    }
+}
+void DrawDebugGrid(void)
+{
+    // Draw vertical lines
+    for(int x = 0; x < WINDOW_WIDTH; x += 30) {
+        DrawLine(x, STATUS_BAR_HEIGHT, x, WINDOW_HEIGHT, (Color){50, 50, 50, 255});
+    }
+    // Draw horizontal lines
+    for(int y = STATUS_BAR_HEIGHT; y < WINDOW_HEIGHT; y += 30) {
+        DrawLine(0, y, WINDOW_WIDTH, y, (Color){50, 50, 50, 255});
     }
 }
 void DrawStatusBar(SnakeInterface* snake, bool using_array, int score)
@@ -198,6 +240,7 @@ void DrawGameState(SnakeInterface *snake, GameState *state)
         });
     }
 
+    DrawDebugGrid();
     DrawStatusBar(snake, state->using_array, state->score);
     DrawRectangleLinesEx((Rectangle){0, STATUS_BAR_HEIGHT, WINDOW_WIDTH, WINDOW_HEIGHT - STATUS_BAR_HEIGHT}, 1, WHITE);
 
@@ -232,6 +275,7 @@ void DrawGameState(SnakeInterface *snake, GameState *state)
 
     EndDrawing();
 }
+
 int main(void)
 {
     InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Snake Game");
@@ -249,7 +293,9 @@ int main(void)
             .apple = {0}
     };
 
-    snake->init(WINDOW_WIDTH/2, PLAY_AREA_Y + (WINDOW_HEIGHT-PLAY_AREA_Y)/2);
+    int startX = ((WINDOW_WIDTH / 2) / 30) * 30;  // Round to nearest grid position
+    int startY = (((WINDOW_HEIGHT + STATUS_BAR_HEIGHT) / 2) / 30) * 30;
+    snake->init(startX, startY);
     SpawnApple(&state.apple, snake);
     InitScreenShake();
 

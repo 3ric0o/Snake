@@ -22,14 +22,15 @@ static void array_init(int initial_x, int initial_y)
     snake_array.positions[0].y = initial_y;
 }
 
-static void array_move(int x, int y)
+static void array_move(int dx, int dy)
 {
-    for(int i = snake_array.length - 1; i > 0; i--)
+    // Ensure movement is grid-aligned
+    for (int i = snake_array.length - 1; i > 0; i--)
     {
         snake_array.positions[i] = snake_array.positions[i - 1];
     }
-    snake_array.positions[0].x += x;
-    snake_array.positions[0].y += y;
+    snake_array.positions[0].x += dx;
+    snake_array.positions[0].y += dy;
 }
 
 static void array_grow(void)
