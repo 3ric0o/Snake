@@ -27,6 +27,9 @@ typedef struct
     // Get the snake's head position
     Position (*get_head)(void);
 
+    // Get the snake's length
+    int (*get_length)(void);
+
     // Draw the snake
     void (*draw)(void);
 
@@ -34,4 +37,5 @@ typedef struct
     void (*cleanup)(void);
 
 } SnakeInterface;
+
 #endif //SNAKE_SNAKE_INTERFACE_H

@@ -3,15 +3,56 @@
 #include "snake_list.h"
 #include "snake_array.h"
 
+enum
+{
+    Moving_Up,
+    Moving_Down,
+    Moving_Left,
+    Moving_Right
+
+};
+
 void check_dataStructure(bool using_array, SnakeInterface **snake)
 {
-    if(using_array)
+    *snake = using_array ? get_snake_array(false) : get_snake_list(false);
+}
+
+void get_input(int *direction)
+{
+    if(IsKeyPressed(KEY_W) && *direction != Moving_Down)
     {
-        *snake = get_snake_array();
+        *direction = Moving_Up;
     }
-    else
+    else if(IsKeyPressed(KEY_S) && *direction != Moving_Up)
     {
-        *snake = get_snake_list();
+        *direction = Moving_Down;
+    }
+    else if(IsKeyPressed(KEY_A) && *direction != Moving_Right)
+    {
+        *direction = Moving_Left;
+    }
+    else if(IsKeyPressed(KEY_D) && *direction != Moving_Left)
+    {
+        *direction = Moving_Right;
+    }
+}
+
+void constantly_move(SnakeInterface *snake, int direction)
+{
+    switch(direction)
+    {
+        case Moving_Up:
+            snake->move(0, -30);
+            break;
+        case Moving_Down:
+            snake->move(0, 30);
+            break;
+        case Moving_Left:
+            snake->move(-30, 0);
+            break;
+        case Moving_Right:
+            snake->move(30, 0);
+            break;
     }
 }
 
@@ -19,20 +60,37 @@ int main(void)
 {
     SnakeInterface *snake = NULL;
     bool using_array = true;
-
-    check_dataStructure(using_array, &snake);
-    snake->init(800,450);
+    int direction = Moving_Up;
 
     InitWindow(1600,900,"Snake Game");
-    SetTargetFPS(60);
+    SetTargetFPS(15);
+
+    //check_dataStructure(using_array, &snake);
+    snake = get_snake_array(true);
+    snake->init(800,450);
 
     while (!WindowShouldClose())
     {
+        /*if (IsKeyPressed(KEY_SPACE))
+        {
+            using_array = !using_array;
+            check_dataStructure(using_array, &snake);
+        }*/
+
         BeginDrawing();
-        ClearBackground(SKYBLUE);
+        ClearBackground(BLACK);
+        snake->draw();
+
+        get_input(&direction);
+        constantly_move(snake, direction);
+
         EndDrawing();
     }
 
+    if (snake != NULL)
+    {
+        snake->cleanup();
+    }
     CloseWindow();
     return 0;
 }

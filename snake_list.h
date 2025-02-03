@@ -4,6 +4,6 @@
 #include "snake_interface.h"
 
 //Get the list implementation of the snake
-SnakeInterface *get_snake_list(void);
+SnakeInterface *get_snake_list(bool first_init);
 
 #endif //SNAKE_SNAKE_LIST_H
