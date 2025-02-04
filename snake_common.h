@@ -15,7 +15,7 @@ typedef struct
     int length;
 } SnakeList;
 
-// Declare snake_list as external
-extern SnakeList snake_list;
+
+extern SnakeList snake_list; // extern keyword is used to declare a variable that is defined in another file!!!!
 
 #endif // SNAKE_COMMON_H

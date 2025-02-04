@@ -7,7 +7,7 @@
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
 #define STATUS_BAR_HEIGHT 40
-#define PLAY_AREA_Y STATUS_BAR_HEIGHT
+
 
 
 typedef struct
@@ -15,6 +15,7 @@ typedef struct
     Vector2 position;
     bool active;
 } Apple;
+
 typedef struct
 {
     bool gameOver;
@@ -106,7 +107,7 @@ void ResetGame(GameState *state, SnakeInterface *snake)
     state->moveTimer = 0;
     state->score = 0;
 
-    snake->init(WINDOW_WIDTH/2, PLAY_AREA_Y + (WINDOW_HEIGHT-PLAY_AREA_Y)/2);
+    snake->init(WINDOW_WIDTH/2, (WINDOW_HEIGHT)/2);
     SpawnApple(&state->apple, snake);
 }
 bool CheckAppleCollision(Vector2 snakeHead, Apple apple)
@@ -162,6 +163,18 @@ void ConstantlyMove(SnakeInterface *snake, GameState *state)
             state->gameOver = true;
             TriggerScreenShake(0.5f, 15.0f);
             return;
+        }
+
+        // Check Head position to Body
+        Position *positions = snake->get_positions();
+        for (int i = 0; i < snake->get_length(); i++)
+        {
+            if (nextPos.x == positions[i].x && nextPos.y == positions[i].y)
+            {
+                state->gameOver = true;
+                TriggerScreenShake(0.5f, 15.0f);
+                return;
+            }
         }
 
         // Check apple collision with current position
